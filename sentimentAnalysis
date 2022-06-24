@@ -1,0 +1,416 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Untitled19.ipynb",
+      "provenance": [],
+      "collapsed_sections": [],
+      "authorship_tag": "ABX9TyOWMCfc/9LVaeKLT3nXGv9r",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/ayo43/sentimentAnalysis/blob/main/sentimentAnalysis\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 37,
+      "metadata": {
+        "id": "8NtaZSuM_XMe"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "from sklearn.feature_extraction.text import CountVectorizer\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.tree import DecisionTreeClassifier\n",
+        "import re\n",
+        "import nltk\n",
+        "import nltk"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data = pd.read_csv('/content/buhari.csv', error_bad_lines=False, encoding='utf8')"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "foDCEfTC_hF1",
+        "outputId": "b6500648-f0ec-4ba0-c24b-8b6072396a49"
+      },
+      "execution_count": 38,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.7/dist-packages/IPython/core/interactiveshell.py:2882: FutureWarning: The error_bad_lines argument has been deprecated and will be removed in a future version.\n",
+            "\n",
+            "\n",
+            "  exec(code_obj, self.user_global_ns, self.user_ns)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data.head()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 206
+        },
+        "id": "Pd5qviFeAKQS",
+        "outputId": "522c5d6e-b3ef-4568-a9df-6aaf682242e4"
+      },
+      "execution_count": 39,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "   Unnamed: 0                       Date             User  \\\n",
+              "0           0  2022-06-24 17:01:50+00:00   MaureenEgbuna2   \n",
+              "1           1  2022-06-24 17:01:48+00:00     DavidsonUba1   \n",
+              "2           2  2022-06-24 17:01:24+00:00   __Godson_Prime   \n",
+              "3           3  2022-06-24 17:01:20+00:00  Yusufcu30773501   \n",
+              "4           4  2022-06-24 17:01:19+00:00    princedawill1   \n",
+              "\n",
+              "                                               Tweet  \n",
+              "0  @Shehusky I am sorry Buhari has been a disappo...  \n",
+              "1  @NGRPresident @NigeriaGov @MBuhari @BorisJohns...  \n",
+              "2  @renoomokri @PeterObi Lol Peter Obi and Buhari...  \n",
+              "3  @yolcufurkan_ Kuranı Kerim ve meali tefsiri\\nS...  \n",
+              "4  @makinde_joy @investor_bet 🤣🤣🤣🤣 no shut down t...  "
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-01c290ab-5af2-4b2e-9e77-7ea9b0858329\">\n",
+              "    <div class=\"colab-df-container\">\n",
+              "      <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>Unnamed: 0</th>\n",
+              "      <th>Date</th>\n",
+              "      <th>User</th>\n",
+              "      <th>Tweet</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>0</td>\n",
+              "      <td>2022-06-24 17:01:50+00:00</td>\n",
+              "      <td>MaureenEgbuna2</td>\n",
+              "      <td>@Shehusky I am sorry Buhari has been a disappo...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>1</td>\n",
+              "      <td>2022-06-24 17:01:48+00:00</td>\n",
+              "      <td>DavidsonUba1</td>\n",
+              "      <td>@NGRPresident @NigeriaGov @MBuhari @BorisJohns...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>2</td>\n",
+              "      <td>2022-06-24 17:01:24+00:00</td>\n",
+              "      <td>__Godson_Prime</td>\n",
+              "      <td>@renoomokri @PeterObi Lol Peter Obi and Buhari...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>3</td>\n",
+              "      <td>2022-06-24 17:01:20+00:00</td>\n",
+              "      <td>Yusufcu30773501</td>\n",
+              "      <td>@yolcufurkan_ Kuranı Kerim ve meali tefsiri\\nS...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>4</td>\n",
+              "      <td>2022-06-24 17:01:19+00:00</td>\n",
+              "      <td>princedawill1</td>\n",
+              "      <td>@makinde_joy @investor_bet 🤣🤣🤣🤣 no shut down t...</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>\n",
+              "      <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-01c290ab-5af2-4b2e-9e77-7ea9b0858329')\"\n",
+              "              title=\"Convert this dataframe to an interactive table.\"\n",
+              "              style=\"display:none;\">\n",
+              "        \n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "       width=\"24px\">\n",
+              "    <path d=\"M0 0h24v24H0V0z\" fill=\"none\"/>\n",
+              "    <path d=\"M18.56 5.44l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94zm-11 1L8.5 8.5l.94-2.06 2.06-.94-2.06-.94L8.5 2.5l-.94 2.06-2.06.94zm10 10l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94z\"/><path d=\"M17.41 7.96l-1.37-1.37c-.4-.4-.92-.59-1.43-.59-.52 0-1.04.2-1.43.59L10.3 9.45l-7.72 7.72c-.78.78-.78 2.05 0 2.83L4 21.41c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l7.78-7.78 2.81-2.81c.8-.78.8-2.07 0-2.86zM5.41 20L4 18.59l7.72-7.72 1.47 1.35L5.41 20z\"/>\n",
+              "  </svg>\n",
+              "      </button>\n",
+              "      \n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      flex-wrap:wrap;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "      <script>\n",
+              "        const buttonEl =\n",
+              "          document.querySelector('#df-01c290ab-5af2-4b2e-9e77-7ea9b0858329 button.colab-df-convert');\n",
+              "        buttonEl.style.display =\n",
+              "          google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "        async function convertToInteractive(key) {\n",
+              "          const element = document.querySelector('#df-01c290ab-5af2-4b2e-9e77-7ea9b0858329');\n",
+              "          const dataTable =\n",
+              "            await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                     [key], {});\n",
+              "          if (!dataTable) return;\n",
+              "\n",
+              "          const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "            '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "            + ' to learn more about interactive tables.';\n",
+              "          element.innerHTML = '';\n",
+              "          dataTable['output_type'] = 'display_data';\n",
+              "          await google.colab.output.renderOutput(dataTable, element);\n",
+              "          const docLink = document.createElement('div');\n",
+              "          docLink.innerHTML = docLinkHtml;\n",
+              "          element.appendChild(docLink);\n",
+              "        }\n",
+              "      </script>\n",
+              "    </div>\n",
+              "  </div>\n",
+              "  "
+            ]
+          },
+          "metadata": {},
+          "execution_count": 39
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data = data[[\"Tweet\"]]\n",
+        "data.isnull().sum()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ALfFWIKaAeXN",
+        "outputId": "c80eca29-9e05-4cec-acdc-da82f4b85886"
+      },
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "Tweet    0\n",
+              "dtype: int64"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 12
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data = data.dropna()"
+      ],
+      "metadata": {
+        "id": "OIzFkvHPvzsz"
+      },
+      "execution_count": 14,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "nltk.download('stopwords')\n",
+        "stemmer = nltk.SnowballStemmer(\"english\")\n",
+        "from nltk.corpus import stopwords\n",
+        "import string\n",
+        "stopword=set(stopwords.words('english'))\n",
+        "\n",
+        "def clean(text):\n",
+        "    text = str(text).lower()\n",
+        "    text = re.sub('\\[.*?\\]', '', text)\n",
+        "    text = re.sub('https?://\\S+|www\\.\\S+', '', text)\n",
+        "    text = re.sub('<.*?>+', '', text)\n",
+        "    text = re.sub('[%s]' % re.escape(string.punctuation), '', text)\n",
+        "    text = re.sub('\\n', '', text)\n",
+        "    text = re.sub('\\w*\\d\\w*', '', text)\n",
+        "    text = [word for word in text.split(' ') if word not in stopword]\n",
+        "    text=\" \".join(text)\n",
+        "    text = [stemmer.stem(word) for word in text.split(' ')]\n",
+        "    text=\" \".join(text)\n",
+        "    return text\n",
+        "data[\"Tweet\"] = data[\"Tweet\"].apply(clean)\n",
+        "\n",
+        "from nltk.sentiment.vader import SentimentIntensityAnalyzer\n",
+        "nltk.download('vader_lexicon')\n",
+        "sentiments = SentimentIntensityAnalyzer()\n",
+        "data[\"Positive\"] = [sentiments.polarity_scores(i)[\"pos\"] for i in data[\"Tweet\"]]\n",
+        "data[\"Negative\"] = [sentiments.polarity_scores(i)[\"neg\"] for i in data[\"Tweet\"]]"
+      ],
+      "metadata": {
+        "id": "ZFiOeyF6D-Aa",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "90ceec4e-617b-4ecb-94ac-0a6b64819f57"
+      },
+      "execution_count": 46,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "[nltk_data] Downloading package stopwords to /root/nltk_data...\n",
+            "[nltk_data]   Package stopwords is already up-to-date!\n",
+            "[nltk_data] Downloading package vader_lexicon to /root/nltk_data...\n",
+            "[nltk_data]   Package vader_lexicon is already up-to-date!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data = data[[\"Tweet\", \"Positive\", \"Negative\"]]\n",
+        "print(data.head())"
+      ],
+      "metadata": {
+        "id": "Yod2skjqnwkZ",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "d01dbe36-0fc3-4f26-b132-526127c6233a"
+      },
+      "execution_count": 47,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "                                               Tweet  Positive  Negative\n",
+            "0  shehuski sorri buhari disappoint show stuff ma...     0.000     0.213\n",
+            "1  ngrpresid nigeriagov mbuhari borisjohnson rela...     0.000     0.187\n",
+            "2  renoomokri peterobi lol peter obi buhari shoul...     0.102     0.244\n",
+            "3  yolcufurkan kuranı kerim meali tefsirisahibi b...     0.000     0.000\n",
+            "4  makindejoy investorbet 🤣🤣🤣🤣 shut compani wey d...     0.000     0.147\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "x = sum(data[\"Positive\"])\n",
+        "y = sum(data[\"Negative\"])\n",
+        "\n",
+        "def sentiment_score(a, b):\n",
+        "    if (a>b):\n",
+        "        print(\"Positive\")\n",
+        "    elif (b>a):\n",
+        "        print(\"Negative\")\n",
+        "\n",
+        "\n",
+        "print(\"Positive: \", x)\n",
+        "print(\"Negative: \", y)\n",
+        "\n",
+        "sentiment_score(x, y)"
+      ],
+      "metadata": {
+        "id": "XGqWIIkQo-Fm",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "4943cb76-b3c6-4ac2-9d46-0c02047e5774"
+      },
+      "execution_count": 53,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Positive:  864.6919999999994\n",
+            "Negative:  977.9119999999971\n",
+            "Negative\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
